@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basic Math - Fun Learning!</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --secondary: #a29bfe;
+            --success: #00b894;
+            --danger: #d63031;
+            --background: #f0f3f7;
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --text: #2d3436;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            transition: background-color 0.3s ease;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h1 {
+            font-size: 3rem;
+            color: var(--primary);
+            text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.05);
+            margin-bottom: 0.5rem;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            background: var(--card-bg);
+            padding: 1rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            width: 100%;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            display: block;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #636e72;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .game-container {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .problem {
+            font-size: 4rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            color: var(--text);
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .option-btn {
+            background: white;
+            border: 3px solid var(--secondary);
+            border-radius: 15px;
+            padding: 1.5rem;
+            font-size: 1.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            color: var(--text);
+        }
+
+        .option-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+            border-color: var(--primary);
+            background: #f8f9fa;
+        }
+
+        .option-btn:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+
+        .option-btn:disabled {
+            cursor: default;
+        }
+
+        .option-btn.correct {
+            background-color: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .option-btn.wrong {
+            background-color: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+
+        .next-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem 3rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: pointer;
+            display: none;
+            margin: 0 auto;
+            box-shadow: 0 5px 15px rgba(108, 92, 231, 0.4);
+            transition: all 0.2s;
+        }
+
+        .next-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(108, 92, 231, 0.6);
+        }
+
+        .feedback-message {
+            margin-top: 1rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+            min-height: 2rem;
+        }
+
+        .feedback-correct {
+            color: var(--success);
+        }
+
+        .feedback-wrong {
+            color: var(--danger);
+        }
+
+        /* Background feedback shades */
+        body.correct-bg {
+            background-color: #d1f2eb;
+        }
+
+        body.wrong-bg {
+            background-color: #fADBD8;
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+
+            .problem {
+                font-size: 3rem;
+            }
+
+            .option-btn {
+                padding: 1rem;
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Basic Math</h1>
+        <div class="stats">
+            <div class="stat-item">
+                <span id="speed" class="stat-value">0.0</span>
+                <span class="stat-label">Speed (APM)</span>
+            </div>
+            <div class="stat-item">
+                <span id="top-speed" class="stat-value">0.0</span>
+                <span class="stat-label">Top Speed</span>
+            </div>
+            <div class="stat-item">
+                <span id="score" class="stat-value">0</span>
+                <span class="stat-label">Correct</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="game-container">
+        <div id="problem" class="problem">? + ?</div>
+        <div id="options" class="options">
+            <button class="option-btn" onclick="checkAnswer(0)">?</button>
+            <button class="option-btn" onclick="checkAnswer(1)">?</button>
+            <button class="option-btn" onclick="checkAnswer(2)">?</button>
+            <button class="option-btn" onclick="checkAnswer(3)">?</button>
+        </div>
+        <div id="feedback" class="feedback-message"></div>
+        <button id="next-btn" class="next-btn" onclick="nextQuestion()">Next Question</button>
+    </main>
+
+    <script>
+        let currentProblem = {};
+        let score = 0;
+        let topSpeed = parseFloat(localStorage.getItem('basicMathTopSpeed')) || 0;
+        let missedProblems = JSON.parse(localStorage.getItem('basicMathMissed')) || {};
+        let startTime = null;
+        let answeredCorrectlyInSession = 0;
+        let isAnswered = false;
+
+        document.getElementById('top-speed').textContent = topSpeed.toFixed(1);
+
+        let lastQuestionKey = null;
+
+        function generateOptions(type, result) {
+            let options = [result];
+            while (options.length < 4) {
+                let distractor;
+                if (type === 'mul') {
+                    const offsets = [-1, 1, -2, 2, -10, 10];
+                    distractor = result + offsets[Math.floor(Math.random() * offsets.length)];
+                } else {
+                    distractor = result + (Math.floor(Math.random() * 7) - 3);
+                }
+
+                if (distractor >= 0 && !options.includes(distractor)) {
+                    options.push(distractor);
+                }
+            }
+            return options.sort(() => Math.random() - 0.5);
+        }
+
+        function generateProblem() {
+            let newProblem = null;
+            let attempts = 0;
+
+            while (attempts < 10) {
+                attempts++;
+                // 40% chance to show a missed problem if any exist
+                const missedKeys = Object.keys(missedProblems);
+                if (missedKeys.length > 0 && Math.random() < 0.4) {
+                    const randomKey = missedKeys[Math.floor(Math.random() * missedKeys.length)];
+                    // Don't show the same missed question twice in a row if alternatives exist
+                    if (randomKey === lastQuestionKey && missedKeys.length > 1) continue;
+
+                    const prob = missedProblems[randomKey];
+                    newProblem = {
+                        ...prob,
+                        options: generateOptions(prob.type, prob.result),
+                        isFromMissed: true,
+                        key: randomKey
+                    };
+                } else {
+                    const types = ['add', 'sub', 'mul'];
+                    const type = types[Math.floor(Math.random() * types.length)];
+                    let a, b, result, symbol;
+
+                    if (type === 'add') {
+                        result = Math.floor(Math.random() * 21) + 5;
+                        a = Math.floor(Math.random() * (result + 1));
+                        b = result - a;
+                        symbol = '+';
+                    } else if (type === 'sub') {
+                        a = Math.floor(Math.random() * 21) + 5;
+                        b = Math.floor(Math.random() * (a + 1));
+                        result = a - b;
+                        symbol = '-';
+                    } else {
+                        a = Math.floor(Math.random() * 12) + 1;
+                        b = Math.floor(Math.random() * 12) + 1;
+                        result = a * b;
+                        symbol = '×';
+                    }
+
+                    const key = `${a}${symbol}${b}`;
+                    if (key === lastQuestionKey) continue;
+
+                    newProblem = {
+                        a, b, symbol, result, type, key,
+                        options: generateOptions(type, result)
+                    };
+                }
+
+                if (newProblem) {
+                    lastQuestionKey = newProblem.key;
+                    break;
+                }
+            }
+            return newProblem;
+        }
+
+        function displayProblem() {
+            isAnswered = false;
+            currentProblem = generateProblem();
+            document.getElementById('problem').textContent = `${currentProblem.a} ${currentProblem.symbol} ${currentProblem.b} = ?`;
+
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach((btn, i) => {
+                btn.textContent = currentProblem.options[i];
+                btn.className = 'option-btn';
+                btn.disabled = false;
+            });
+
+            document.getElementById('next-btn').style.display = 'none';
+            document.getElementById('feedback').textContent = '';
+            document.body.className = '';
+        }
+
+        function checkAnswer(index) {
+            if (isAnswered) return;
+            isAnswered = true;
+
+            if (startTime === null) {
+                startTime = Date.now();
+                setInterval(updateSpeed, 1000);
+            }
+
+            const selected = currentProblem.options[index];
+            const buttons = document.querySelectorAll('.option-btn');
+            const feedbackEl = document.getElementById('feedback');
+            const nextBtn = document.getElementById('next-btn');
+
+            buttons.forEach(btn => btn.disabled = true);
+
+            if (selected === currentProblem.result) {
+                score++;
+                answeredCorrectlyInSession++;
+                buttons[index].classList.add('correct');
+                feedbackEl.textContent = "Correct! Great job! 🎉";
+                feedbackEl.className = "feedback-message feedback-correct";
+                document.body.classList.add('correct-bg');
+
+                // If it was a missed problem, remove it
+                if (currentProblem.key && missedProblems[currentProblem.key]) {
+                    delete missedProblems[currentProblem.key];
+                    localStorage.setItem('basicMathMissed', JSON.stringify(missedProblems));
+                }
+            } else {
+                buttons[index].classList.add('wrong');
+                buttons.forEach(btn => {
+                    if (parseInt(btn.textContent) === currentProblem.result) {
+                        btn.classList.add('correct');
+                    }
+                });
+                feedbackEl.textContent = `Oops! The answer was ${currentProblem.result}.`;
+                feedbackEl.className = "feedback-message feedback-wrong";
+                document.body.classList.add('wrong-bg');
+
+                // Add to missed problems
+                missedProblems[currentProblem.key] = {
+                    a: currentProblem.a,
+                    b: currentProblem.b,
+                    symbol: currentProblem.symbol,
+                    result: currentProblem.result,
+                    type: currentProblem.type
+                };
+                localStorage.setItem('basicMathMissed', JSON.stringify(missedProblems));
+            }
+
+            document.getElementById('score').textContent = score;
+            nextBtn.style.display = 'block';
+            updateSpeed();
+        }
+
+        function updateSpeed() {
+            if (!startTime) return;
+
+            const elapsedMinutes = (Date.now() - startTime) / 60000;
+            if (elapsedMinutes < 0.05) return;
+
+            const speed = answeredCorrectlyInSession / elapsedMinutes;
+            document.getElementById('speed').textContent = speed.toFixed(1);
+
+            if (speed > topSpeed) {
+                topSpeed = speed;
+                localStorage.setItem('basicMathTopSpeed', topSpeed);
+                document.getElementById('top-speed').textContent = topSpeed.toFixed(1);
+            }
+        }
+
+        function nextQuestion() {
+            displayProblem();
+        }
+
+        displayProblem();
+    </script>
+</body>
+
+</html>
