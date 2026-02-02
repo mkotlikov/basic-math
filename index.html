@@ -286,15 +286,13 @@
         let answeredCorrectlyInSession = 0;
         let isAnswered = false;
         let lastQuestionKey = null;
-        let modes = JSON.parse(localStorage.getItem('basicMathModes')) || {
-            add: true,
-            sub: true,
-            mul: true,
-            div: true
-        };
+        let modes = JSON.parse(localStorage.getItem('basicMathModes')) || {};
+        // Ensure all defaults are present and true if not already set
+        const defaultModes = { add: true, sub: true, mul: true, div: true };
+        modes = { ...defaultModes, ...modes };
 
         function updateToggleButtons() {
-            for (const mode in modes) {
+            for (const mode in defaultModes) {
                 const btn = document.getElementById(`toggle-${mode}`);
                 if (modes[mode]) {
                     btn.classList.add('active');
@@ -305,15 +303,13 @@
         }
 
         function toggleMode(mode) {
-            // Count active modes
             const activeCount = Object.values(modes).filter(v => v).length;
-            if (modes[mode] && activeCount === 1) return; // Must have at least one mode
+            if (modes[mode] && activeCount === 1) return;
 
             modes[mode] = !modes[mode];
             localStorage.setItem('basicMathModes', JSON.stringify(modes));
             updateToggleButtons();
 
-            // If the current problem is for a mode we just disabled, get a new one
             if (!modes[currentProblem.type]) {
                 displayProblem();
             }
@@ -323,12 +319,11 @@
 
         document.getElementById('top-speed').textContent = topSpeed.toFixed(1);
 
-
         function generateOptions(type, result) {
             let options = [result];
             while (options.length < 4) {
                 let distractor;
-                if (type === 'mul') {
+                if (type === 'mul' || type === 'div') {
                     const offsets = [-1, 1, -2, 2, -10, 10];
                     distractor = result + offsets[Math.floor(Math.random() * offsets.length)];
                 } else {
@@ -348,10 +343,15 @@
             // 1. Check the Priority Queue first (Scientific Spacing)
             if (problemQueue.length > 0) {
                 newProblem = problemQueue.shift();
-                // Ensure we don't accidentally repeat the last one if the queue logic failed
+
+                // If the type is currently disabled, skip it and call again
+                if (!modes[newProblem.type]) {
+                    return generateProblem();
+                }
+
                 if (newProblem.key === lastQuestionKey) {
                     problemQueue.push(newProblem); // put it back
-                    newProblem = null; // fall through to random
+                    newProblem = null;
                 }
             }
 
@@ -398,7 +398,6 @@
                     result = a * b;
                     symbol = '×';
                 } else {
-                    // Division from 12x12
                     b = Math.floor(Math.random() * 12) + 1;
                     result = Math.floor(Math.random() * 12) + 1;
                     a = b * result;
@@ -411,7 +410,6 @@
                     options: generateOptions(type, result)
                 };
 
-                // Prevent immediate repeat
                 if (newProblem.key === lastQuestionKey) return generateProblem();
             }
 
