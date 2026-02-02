@@ -30,11 +30,13 @@
             background-color: var(--background);
             color: var(--text);
             display: flex;
-            flex-direction: column;
-            align-items: center;
+            flex-direction: row;
+            justify-content: center;
+            align-items: flex-start;
             min-height: 100vh;
             padding: 20px;
             transition: background-color 0.3s ease;
+            gap: 20px;
         }
 
         header {
@@ -188,6 +190,64 @@
             background-color: #fADBD8;
         }
 
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 0 0 500px;
+        }
+
+        .debug-menu {
+            background: #2d3436;
+            color: #dfe6e9;
+            padding: 1.5rem;
+            border-radius: 20px;
+            width: 250px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            position: sticky;
+            top: 20px;
+        }
+
+        .debug-menu h2 {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #636e72;
+            padding-bottom: 0.5rem;
+            color: var(--secondary);
+        }
+
+        .debug-item {
+            margin-bottom: 0.5rem;
+            padding: 0.3rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+        }
+
+        .debug-item.active {
+            border-left: 3px solid var(--success);
+            background: rgba(0, 184, 148, 0.1);
+        }
+
+        .debug-weight {
+            float: right;
+            color: var(--secondary);
+        }
+
+        @media (max-width: 800px) {
+            body {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .debug-menu {
+                width: 100%;
+                max-width: 500px;
+                position: static;
+            }
+        }
+
         @media (max-width: 480px) {
             h1 {
                 font-size: 2.2rem;
@@ -207,35 +267,47 @@
 
 <body>
 
-    <header>
-        <h1>Basic Math</h1>
-        <div class="stats">
-            <div class="stat-item">
-                <span id="speed" class="stat-value">0.0</span>
-                <span class="stat-label">Speed (APM)</span>
+    <div class="main-content">
+        <header>
+            <h1>Basic Math</h1>
+            <div class="stats">
+                <div class="stat-item">
+                    <span id="speed" class="stat-value">0.0</span>
+                    <span class="stat-label">Speed (APM)</span>
+                </div>
+                <div class="stat-item">
+                    <span id="top-speed" class="stat-value">0.0</span>
+                    <span class="stat-label">Top Speed</span>
+                </div>
+                <div class="stat-item">
+                    <span id="score" class="stat-value">0</span>
+                    <span class="stat-label">Correct</span>
+                </div>
             </div>
-            <div class="stat-item">
-                <span id="top-speed" class="stat-value">0.0</span>
-                <span class="stat-label">Top Speed</span>
-            </div>
-            <div class="stat-item">
-                <span id="score" class="stat-value">0</span>
-                <span class="stat-label">Correct</span>
-            </div>
-        </div>
-    </header>
+        </header>
 
-    <main class="game-container">
-        <div id="problem" class="problem">? + ?</div>
-        <div id="options" class="options">
-            <button class="option-btn" onclick="checkAnswer(0)">?</button>
-            <button class="option-btn" onclick="checkAnswer(1)">?</button>
-            <button class="option-btn" onclick="checkAnswer(2)">?</button>
-            <button class="option-btn" onclick="checkAnswer(3)">?</button>
+        <main class="game-container">
+            <div id="problem" class="problem">? + ?</div>
+            <div id="options" class="options">
+                <button class="option-btn" onclick="checkAnswer(0)">?</button>
+                <button class="option-btn" onclick="checkAnswer(1)">?</button>
+                <button class="option-btn" onclick="checkAnswer(2)">?</button>
+                <button class="option-btn" onclick="checkAnswer(3)">?</button>
+            </div>
+            <div id="feedback" class="feedback-message"></div>
+            <button id="next-btn" class="next-btn" onclick="nextQuestion()">Next Question</button>
+        </main>
+    </div>
+
+    <aside class="debug-menu">
+        <h2>Debug: Spaced Repetition</h2>
+        <div id="debug-list">
+            <!-- Missed problems will appear here -->
         </div>
-        <div id="feedback" class="feedback-message"></div>
-        <button id="next-btn" class="next-btn" onclick="nextQuestion()">Next Question</button>
-    </main>
+        <p style="margin-top:10px; font-size:0.7rem; color: #636e72;">
+            Scientific Spacing: Incorrect items are scheduled +2 positions out.
+        </p>
+    </aside>
 
     <script>
         let currentProblem = {};
@@ -245,10 +317,47 @@
         let startTime = null;
         let answeredCorrectlyInSession = 0;
         let isAnswered = false;
+        let lastQuestionKey = null;
+        let currentLevelQuestions = 0;
+
+        // Scientific Spacing: The "Memory Queue"
+        // Incorrect items are inserted into this queue to appear later.
+        let problemQueue = [];
 
         document.getElementById('top-speed').textContent = topSpeed.toFixed(1);
 
-        let lastQuestionKey = null;
+        function updateDebugMenu() {
+            const list = document.getElementById('debug-list');
+            list.innerHTML = '';
+
+            // Show Queue
+            if (problemQueue.length > 0) {
+                problemQueue.forEach((p, i) => {
+                    const div = document.createElement('div');
+                    div.className = 'debug-item';
+                    div.innerHTML = `Next in ${i + 1}: <strong>${p.a}${p.symbol}${p.b}</strong>`;
+                    list.appendChild(div);
+                });
+            } else {
+                list.innerHTML = '<div class="debug-item" style="opacity:0.5">Queue empty (showing random)</div>';
+            }
+
+            // Show Missed Pool
+            const missedKeys = Object.keys(missedProblems);
+            if (missedKeys.length > 0) {
+                const header = document.createElement('div');
+                header.style = "margin: 10px 0 5px; color: var(--secondary); font-size: 0.7rem;";
+                header.textContent = "MISSED POOL (Random 40%)";
+                list.appendChild(header);
+
+                missedKeys.forEach(key => {
+                    const div = document.createElement('div');
+                    div.className = 'debug-item';
+                    div.innerHTML = `<span>${key}</span>`;
+                    list.appendChild(div);
+                });
+            }
+        }
 
         function generateOptions(type, result) {
             let options = [result];
@@ -270,60 +379,69 @@
 
         function generateProblem() {
             let newProblem = null;
-            let attempts = 0;
 
-            while (attempts < 10) {
-                attempts++;
-                // 40% chance to show a missed problem if any exist
+            // 1. Check the Priority Queue first (Scientific Spacing)
+            if (problemQueue.length > 0) {
+                newProblem = problemQueue.shift();
+                // Ensure we don't accidentally repeat the last one if the queue logic failed
+                if (newProblem.key === lastQuestionKey) {
+                    problemQueue.push(newProblem); // put it back
+                    newProblem = null; // fall through to random
+                }
+            }
+
+            // 2. Fallback to Missed Pool or Random
+            if (!newProblem) {
                 const missedKeys = Object.keys(missedProblems);
                 if (missedKeys.length > 0 && Math.random() < 0.4) {
                     const randomKey = missedKeys[Math.floor(Math.random() * missedKeys.length)];
-                    // Don't show the same missed question twice in a row if alternatives exist
-                    if (randomKey === lastQuestionKey && missedKeys.length > 1) continue;
-
-                    const prob = missedProblems[randomKey];
-                    newProblem = {
-                        ...prob,
-                        options: generateOptions(prob.type, prob.result),
-                        isFromMissed: true,
-                        key: randomKey
-                    };
-                } else {
-                    const types = ['add', 'sub', 'mul'];
-                    const type = types[Math.floor(Math.random() * types.length)];
-                    let a, b, result, symbol;
-
-                    if (type === 'add') {
-                        result = Math.floor(Math.random() * 21) + 5;
-                        a = Math.floor(Math.random() * (result + 1));
-                        b = result - a;
-                        symbol = '+';
-                    } else if (type === 'sub') {
-                        a = Math.floor(Math.random() * 21) + 5;
-                        b = Math.floor(Math.random() * (a + 1));
-                        result = a - b;
-                        symbol = '-';
-                    } else {
-                        a = Math.floor(Math.random() * 12) + 1;
-                        b = Math.floor(Math.random() * 12) + 1;
-                        result = a * b;
-                        symbol = '×';
+                    if (randomKey !== lastQuestionKey || missedKeys.length > 1) {
+                        const prob = missedProblems[randomKey];
+                        newProblem = {
+                            ...prob,
+                            options: generateOptions(prob.type, prob.result),
+                            isFromMissed: true,
+                            key: randomKey
+                        };
                     }
-
-                    const key = `${a}${symbol}${b}`;
-                    if (key === lastQuestionKey) continue;
-
-                    newProblem = {
-                        a, b, symbol, result, type, key,
-                        options: generateOptions(type, result)
-                    };
-                }
-
-                if (newProblem) {
-                    lastQuestionKey = newProblem.key;
-                    break;
                 }
             }
+
+            // 3. True Random
+            if (!newProblem) {
+                const types = ['add', 'sub', 'mul'];
+                const type = types[Math.floor(Math.random() * types.length)];
+                let a, b, result, symbol;
+
+                if (type === 'add') {
+                    result = Math.floor(Math.random() * 21) + 5;
+                    a = Math.floor(Math.random() * (result + 1));
+                    b = result - a;
+                    symbol = '+';
+                } else if (type === 'sub') {
+                    a = Math.floor(Math.random() * 21) + 5;
+                    b = Math.floor(Math.random() * (a + 1));
+                    result = a - b;
+                    symbol = '-';
+                } else {
+                    a = Math.floor(Math.random() * 12) + 1;
+                    b = Math.floor(Math.random() * 12) + 1;
+                    result = a * b;
+                    symbol = '×';
+                }
+
+                newProblem = {
+                    a, b, symbol, result, type,
+                    key: `${a}${symbol}${b}`,
+                    options: generateOptions(type, result)
+                };
+
+                // Prevent immediate repeat
+                if (newProblem.key === lastQuestionKey) return generateProblem();
+            }
+
+            lastQuestionKey = newProblem.key;
+            updateDebugMenu();
             return newProblem;
         }
 
@@ -342,6 +460,7 @@
             document.getElementById('next-btn').style.display = 'none';
             document.getElementById('feedback').textContent = '';
             document.body.className = '';
+            updateDebugMenu();
         }
 
         function checkAnswer(index) {
@@ -368,8 +487,7 @@
                 feedbackEl.className = "feedback-message feedback-correct";
                 document.body.classList.add('correct-bg');
 
-                // If it was a missed problem, remove it
-                if (currentProblem.key && missedProblems[currentProblem.key]) {
+                if (missedProblems[currentProblem.key]) {
                     delete missedProblems[currentProblem.key];
                     localStorage.setItem('basicMathMissed', JSON.stringify(missedProblems));
                 }
@@ -384,7 +502,12 @@
                 feedbackEl.className = "feedback-message feedback-wrong";
                 document.body.classList.add('wrong-bg');
 
-                // Add to missed problems
+                // Scientific Spacing: Add to queue to show in 2 questions
+                // If queue is [Q1, Q2], it will appear AFTER Q2.
+                const retryProblem = { ...currentProblem };
+                // insert at index 2 (appear as the 3rd next question)
+                problemQueue.splice(2, 0, retryProblem);
+
                 missedProblems[currentProblem.key] = {
                     a: currentProblem.a,
                     b: currentProblem.b,
@@ -398,17 +521,15 @@
             document.getElementById('score').textContent = score;
             nextBtn.style.display = 'block';
             updateSpeed();
+            updateDebugMenu();
         }
 
         function updateSpeed() {
             if (!startTime) return;
-
             const elapsedMinutes = (Date.now() - startTime) / 60000;
             if (elapsedMinutes < 0.05) return;
-
             const speed = answeredCorrectlyInSession / elapsedMinutes;
             document.getElementById('speed').textContent = speed.toFixed(1);
-
             if (speed > topSpeed) {
                 topSpeed = speed;
                 localStorage.setItem('basicMathTopSpeed', topSpeed);
