@@ -287,9 +287,9 @@
         let isAnswered = false;
         let lastQuestionKey = null;
         let modes = JSON.parse(localStorage.getItem('basicMathModes')) || {};
-        // Ensure all defaults are present and true if not already set
         const defaultModes = { add: true, sub: true, mul: true, div: true };
         modes = { ...defaultModes, ...modes };
+        let problemQueue = [];
 
         function updateToggleButtons() {
             for (const mode in defaultModes) {
