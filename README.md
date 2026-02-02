@@ -2,8 +2,6 @@
 
 A premium, kid-friendly single-page application (SPA) designed to help children master basic arithmetic through **Scientific Spaced Repetition**.
 
-![Basic Math Preview](https://via.placeholder.com/800x450.png?text=Basic+Math+UI+Preview) <!-- Replace with your actual screenshot later -->
-
 ## 🚀 Key Features
 
 -   🌐 **All-in-One Operations**: Practice Addition, Subtraction, Multiplication (up to 12x12), and Division.
