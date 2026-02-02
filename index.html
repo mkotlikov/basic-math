@@ -188,6 +188,36 @@
             background-color: #fADBD8;
         }
 
+        .mode-toggles {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            background: white;
+            border: 3px solid var(--secondary);
+            border-radius: 12px;
+            padding: 0.8rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text);
+            opacity: 0.5;
+        }
+
+        .toggle-btn.active {
+            opacity: 1;
+            border-color: var(--primary);
+            background: var(--secondary);
+            color: white;
+        }
+
         @media (max-width: 480px) {
             h1 {
                 font-size: 2.2rem;
@@ -200,6 +230,11 @@
             .option-btn {
                 padding: 1rem;
                 font-size: 1.5rem;
+            }
+
+            .toggle-btn {
+                padding: 0.5rem;
+                font-size: 1.2rem;
             }
         }
     </style>
@@ -221,6 +256,12 @@
                 <span id="score" class="stat-value">0</span>
                 <span class="stat-label">Correct</span>
             </div>
+        </div>
+        <div class="mode-toggles">
+            <button id="toggle-add" class="toggle-btn active" onclick="toggleMode('add')">+</button>
+            <button id="toggle-sub" class="toggle-btn active" onclick="toggleMode('sub')">−</button>
+            <button id="toggle-mul" class="toggle-btn active" onclick="toggleMode('mul')">×</button>
+            <button id="toggle-div" class="toggle-btn active" onclick="toggleMode('div')">÷</button>
         </div>
     </header>
 
@@ -245,11 +286,40 @@
         let answeredCorrectlyInSession = 0;
         let isAnswered = false;
         let lastQuestionKey = null;
-        let currentLevelQuestions = 0;
+        let modes = JSON.parse(localStorage.getItem('basicMathModes')) || {
+            add: true,
+            sub: true,
+            mul: true,
+            div: true
+        };
 
-        // Scientific Spacing: The "Memory Queue"
-        // Incorrect items are inserted into this queue to appear later.
-        let problemQueue = [];
+        function updateToggleButtons() {
+            for (const mode in modes) {
+                const btn = document.getElementById(`toggle-${mode}`);
+                if (modes[mode]) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            }
+        }
+
+        function toggleMode(mode) {
+            // Count active modes
+            const activeCount = Object.values(modes).filter(v => v).length;
+            if (modes[mode] && activeCount === 1) return; // Must have at least one mode
+
+            modes[mode] = !modes[mode];
+            localStorage.setItem('basicMathModes', JSON.stringify(modes));
+            updateToggleButtons();
+
+            // If the current problem is for a mode we just disabled, get a new one
+            if (!modes[currentProblem.type]) {
+                displayProblem();
+            }
+        }
+
+        updateToggleButtons();
 
         document.getElementById('top-speed').textContent = topSpeed.toFixed(1);
 
@@ -287,7 +357,11 @@
 
             // 2. Fallback to Missed Pool or Random
             if (!newProblem) {
-                const missedKeys = Object.keys(missedProblems);
+                const missedKeys = Object.keys(missedProblems).filter(key => {
+                    const prob = missedProblems[key];
+                    return modes[prob.type];
+                });
+
                 if (missedKeys.length > 0 && Math.random() < 0.4) {
                     const randomKey = missedKeys[Math.floor(Math.random() * missedKeys.length)];
                     if (randomKey !== lastQuestionKey || missedKeys.length > 1) {
@@ -304,8 +378,8 @@
 
             // 3. True Random
             if (!newProblem) {
-                const types = ['add', 'sub', 'mul'];
-                const type = types[Math.floor(Math.random() * types.length)];
+                const activeModes = Object.keys(modes).filter(m => modes[m]);
+                const type = activeModes[Math.floor(Math.random() * activeModes.length)];
                 let a, b, result, symbol;
 
                 if (type === 'add') {
@@ -318,11 +392,17 @@
                     b = Math.floor(Math.random() * (a + 1));
                     result = a - b;
                     symbol = '-';
-                } else {
+                } else if (type === 'mul') {
                     a = Math.floor(Math.random() * 12) + 1;
                     b = Math.floor(Math.random() * 12) + 1;
                     result = a * b;
                     symbol = '×';
+                } else {
+                    // Division from 12x12
+                    b = Math.floor(Math.random() * 12) + 1;
+                    result = Math.floor(Math.random() * 12) + 1;
+                    a = b * result;
+                    symbol = '÷';
                 }
 
                 newProblem = {
