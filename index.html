@@ -30,13 +30,11 @@
             background-color: var(--background);
             color: var(--text);
             display: flex;
-            flex-direction: row;
-            justify-content: center;
-            align-items: flex-start;
+            flex-direction: column;
+            align-items: center;
             min-height: 100vh;
             padding: 20px;
             transition: background-color 0.3s ease;
-            gap: 20px;
         }
 
         header {
@@ -190,64 +188,6 @@
             background-color: #fADBD8;
         }
 
-        .main-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex: 0 0 500px;
-        }
-
-        .debug-menu {
-            background: #2d3436;
-            color: #dfe6e9;
-            padding: 1.5rem;
-            border-radius: 20px;
-            width: 250px;
-            font-family: monospace;
-            font-size: 0.8rem;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-            position: sticky;
-            top: 20px;
-        }
-
-        .debug-menu h2 {
-            font-size: 1rem;
-            margin-bottom: 1rem;
-            border-bottom: 1px solid #636e72;
-            padding-bottom: 0.5rem;
-            color: var(--secondary);
-        }
-
-        .debug-item {
-            margin-bottom: 0.5rem;
-            padding: 0.3rem;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 5px;
-        }
-
-        .debug-item.active {
-            border-left: 3px solid var(--success);
-            background: rgba(0, 184, 148, 0.1);
-        }
-
-        .debug-weight {
-            float: right;
-            color: var(--secondary);
-        }
-
-        @media (max-width: 800px) {
-            body {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .debug-menu {
-                width: 100%;
-                max-width: 500px;
-                position: static;
-            }
-        }
-
         @media (max-width: 480px) {
             h1 {
                 font-size: 2.2rem;
@@ -266,48 +206,35 @@
 </head>
 
 <body>
-
-    <div class="main-content">
-        <header>
-            <h1>Basic Math</h1>
-            <div class="stats">
-                <div class="stat-item">
-                    <span id="speed" class="stat-value">0.0</span>
-                    <span class="stat-label">Speed (APM)</span>
-                </div>
-                <div class="stat-item">
-                    <span id="top-speed" class="stat-value">0.0</span>
-                    <span class="stat-label">Top Speed</span>
-                </div>
-                <div class="stat-item">
-                    <span id="score" class="stat-value">0</span>
-                    <span class="stat-label">Correct</span>
-                </div>
+    <header>
+        <h1>Basic Math</h1>
+        <div class="stats">
+            <div class="stat-item">
+                <span id="speed" class="stat-value">0.0</span>
+                <span class="stat-label">Speed (APM)</span>
             </div>
-        </header>
-
-        <main class="game-container">
-            <div id="problem" class="problem">? + ?</div>
-            <div id="options" class="options">
-                <button class="option-btn" onclick="checkAnswer(0)">?</button>
-                <button class="option-btn" onclick="checkAnswer(1)">?</button>
-                <button class="option-btn" onclick="checkAnswer(2)">?</button>
-                <button class="option-btn" onclick="checkAnswer(3)">?</button>
+            <div class="stat-item">
+                <span id="top-speed" class="stat-value">0.0</span>
+                <span class="stat-label">Top Speed</span>
             </div>
-            <div id="feedback" class="feedback-message"></div>
-            <button id="next-btn" class="next-btn" onclick="nextQuestion()">Next Question</button>
-        </main>
-    </div>
-
-    <aside class="debug-menu">
-        <h2>Debug: Spaced Repetition</h2>
-        <div id="debug-list">
-            <!-- Missed problems will appear here -->
+            <div class="stat-item">
+                <span id="score" class="stat-value">0</span>
+                <span class="stat-label">Correct</span>
+            </div>
         </div>
-        <p style="margin-top:10px; font-size:0.7rem; color: #636e72;">
-            Scientific Spacing: Incorrect items are scheduled +2 positions out.
-        </p>
-    </aside>
+    </header>
+
+    <main class="game-container">
+        <div id="problem" class="problem">? + ?</div>
+        <div id="options" class="options">
+            <button class="option-btn" onclick="checkAnswer(0)">?</button>
+            <button class="option-btn" onclick="checkAnswer(1)">?</button>
+            <button class="option-btn" onclick="checkAnswer(2)">?</button>
+            <button class="option-btn" onclick="checkAnswer(3)">?</button>
+        </div>
+        <div id="feedback" class="feedback-message"></div>
+        <button id="next-btn" class="next-btn" onclick="nextQuestion()">Next Question</button>
+    </main>
 
     <script>
         let currentProblem = {};
@@ -326,38 +253,6 @@
 
         document.getElementById('top-speed').textContent = topSpeed.toFixed(1);
 
-        function updateDebugMenu() {
-            const list = document.getElementById('debug-list');
-            list.innerHTML = '';
-
-            // Show Queue
-            if (problemQueue.length > 0) {
-                problemQueue.forEach((p, i) => {
-                    const div = document.createElement('div');
-                    div.className = 'debug-item';
-                    div.innerHTML = `Next in ${i + 1}: <strong>${p.a}${p.symbol}${p.b}</strong>`;
-                    list.appendChild(div);
-                });
-            } else {
-                list.innerHTML = '<div class="debug-item" style="opacity:0.5">Queue empty (showing random)</div>';
-            }
-
-            // Show Missed Pool
-            const missedKeys = Object.keys(missedProblems);
-            if (missedKeys.length > 0) {
-                const header = document.createElement('div');
-                header.style = "margin: 10px 0 5px; color: var(--secondary); font-size: 0.7rem;";
-                header.textContent = "MISSED POOL (Random 40%)";
-                list.appendChild(header);
-
-                missedKeys.forEach(key => {
-                    const div = document.createElement('div');
-                    div.className = 'debug-item';
-                    div.innerHTML = `<span>${key}</span>`;
-                    list.appendChild(div);
-                });
-            }
-        }
 
         function generateOptions(type, result) {
             let options = [result];
@@ -441,7 +336,6 @@
             }
 
             lastQuestionKey = newProblem.key;
-            updateDebugMenu();
             return newProblem;
         }
 
@@ -460,7 +354,6 @@
             document.getElementById('next-btn').style.display = 'none';
             document.getElementById('feedback').textContent = '';
             document.body.className = '';
-            updateDebugMenu();
         }
 
         function checkAnswer(index) {
@@ -521,7 +414,6 @@
             document.getElementById('score').textContent = score;
             nextBtn.style.display = 'block';
             updateSpeed();
-            updateDebugMenu();
         }
 
         function updateSpeed() {
